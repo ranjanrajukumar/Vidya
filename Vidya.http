@@ -1,0 +1,6 @@
+@Vidya_HostAddress = http://localhost:5198
+
+GET {{Vidya_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
