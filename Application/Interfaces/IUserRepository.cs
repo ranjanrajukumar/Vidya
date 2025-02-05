@@ -8,8 +8,10 @@ namespace Vidya.Application.Interfaces
     {
         Task<List<Users>> GetUsersAsync();
         Task<Users> GetUserByIdAsync(int id);
+        Task<Users> GetUserByUsernameAsync(string username); // Added for authentication
         Task AddUserAsync(Users user);
         Task UpdateUserAsync(Users user);
         Task DeleteUserAsync(int id);  // Add this line to the interface
+
     }
 }

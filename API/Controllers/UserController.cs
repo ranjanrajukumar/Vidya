@@ -4,6 +4,7 @@ using Vidya.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Vidya.Core.Security;
+using Vidya.Application.Services;
 
 
 
@@ -14,13 +15,16 @@ namespace Vidya.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly JwtTokenService _jwtService;
+        private readonly UserService _userService;
         private readonly IUserRepository _userRepository;
+
        
 
         // Inject IUserRepository in the constructor
-        public UserController(JwtTokenService jwtService, IUserRepository userRepository)
+        public UserController(JwtTokenService jwtService, UserService userService, IUserRepository userRepository)
         {
             _jwtService = jwtService;
+            _userService = userService;
             _userRepository = userRepository;
         }
 
@@ -161,5 +165,46 @@ namespace Vidya.API.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginUser)
+        {
+            if (loginUser == null || string.IsNullOrWhiteSpace(loginUser.UserName) || string.IsNullOrWhiteSpace(loginUser.Password))
+                return BadRequest(new { message = "Username and password are required." });
+
+            // Fetch user from database
+            var user = await _userRepository.GetUserByUsernameAsync(loginUser.UserName);
+            if (user == null)
+                return Unauthorized(new { message = "Invalid credentials." });
+
+            // Validate password (hashed comparison)
+            if (!BCrypt.Net.BCrypt.Verify(loginUser.Password, user.Password))
+                return Unauthorized(new { message = "Invalid credentials." });
+
+            //// Check if an active token already exists
+            //var existingToken = await _userService.GetTokenAsync(user.UserId.ToString(), user.UserName);
+            //if (!string.IsNullOrEmpty(existingToken))
+            //    return Ok(new { token = existingToken });
+
+            // Generate JWT token
+            var token = _jwtService.GenerateToken(user.UserId.ToString(), user.UserName);
+
+            // Store token in Redis cache
+            await _userService.StoreTokenAsync(user.UserId.ToString(), token);
+
+            return Ok(new { token });
+        }
+
+
+        [HttpGet("token/{userId}")]
+        public async Task<IActionResult> GetStoredToken(string userId)
+        {
+            var token = await _userService.GetStoredTokenAsync(userId);
+            if (string.IsNullOrEmpty(token))
+                return NotFound("Token not found.");
+
+            return Ok(new { token });
+        }
+
     }
 }

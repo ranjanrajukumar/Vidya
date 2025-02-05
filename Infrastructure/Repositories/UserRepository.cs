@@ -9,7 +9,6 @@ namespace Vidya.Infrastructure.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        // Assuming you have a data context (e.g., a DbContext) for accessing the database
         private readonly ApplicationDbContext _context;
 
         public UserRepository(ApplicationDbContext context)
@@ -19,14 +18,23 @@ namespace Vidya.Infrastructure.Repositories
 
         public async Task<List<Users>> GetUsersAsync()
         {
-            // This is just an example assuming you are using Entity Framework.
-
-            return await _context.Users.ToListAsync();
+            return await _context.Users
+                                 .AsNoTracking()  // Improves performance for read-only queries
+                                 .ToListAsync();
         }
 
         public async Task<Users> GetUserByIdAsync(int id)
         {
-            return await _context.Users.FindAsync(id);
+            return await _context.Users
+                                 .AsNoTracking()
+                                 .FirstOrDefaultAsync(u => u.UserId == id);
+        }
+
+        public async Task<Users> GetUserByUsernameAsync(string username)
+        {
+            return await _context.Users
+                                 .AsNoTracking()
+                                 .FirstOrDefaultAsync(u => u.UserName == username);
         }
 
         public async Task AddUserAsync(Users user)
@@ -37,13 +45,17 @@ namespace Vidya.Infrastructure.Repositories
 
         public async Task UpdateUserAsync(Users user)
         {
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
+            var existingUser = await _context.Users.FindAsync(user.UserId);
+            if (existingUser != null)
+            {
+                _context.Entry(existingUser).CurrentValues.SetValues(user);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task DeleteUserAsync(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == id);
             if (user != null)
             {
                 _context.Users.Remove(user);

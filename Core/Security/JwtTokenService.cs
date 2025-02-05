@@ -17,28 +17,83 @@ namespace Vidya.Core.Security
             _config = config;
         }
 
-        public string GenerateToken(string userId, string email)
+        //public string GenerateToken(string userId, string username)
+        //{
+        //    // Check if the JWT Key is available
+        //   // var key = _config["Jwt:Key"];
+        //    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+
+        //    if (string.IsNullOrEmpty(key))
+        //    {
+        //        throw new Exception("JWT Key is missing from configuration");
+        //    }
+
+        //    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+        //    var creds = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        //    var claims = new List<Claim>
+        //    {
+        //        new Claim(JwtRegisteredClaimNames.Sub, userId),   // User ID claim
+        //        new Claim(ClaimTypes.Name, username),              // Username claim
+        //        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // Unique Token ID
+        //    };
+
+        //    // Fetch expiration time from configuration (default to 1 hour if not found)
+        //    double tokenExpiry = Convert.ToDouble(_config["Jwt:ExpiryHours"] ?? "1");
+        //    var expires = DateTime.UtcNow.AddHours(tokenExpiry);
+
+        //    // Create the token
+        //    var token = new JwtSecurityToken(
+        //        issuer: _config["Jwt:Issuer"],
+        //        audience: _config["Jwt:Audience"],
+        //        claims: claims,
+        //        expires: expires,
+        //        signingCredentials: creds
+        //    );
+
+        //    // Write the token as a string and return
+        //    return new JwtSecurityTokenHandler().WriteToken(token);
+        //}
+
+
+        public string GenerateToken(string userId, string username)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            // Retrieve the JWT Key (Ensure it's Base64 encoded)
+            var key = _config["Jwt:Key"];
+
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new Exception("JWT Key is missing from configuration");
+            }
+
+            // Decode the key if it's Base64 encoded
+            var keyBytes = Convert.FromBase64String(key);
+            var securityKey = new SymmetricSecurityKey(keyBytes);
+
+            var creds = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, userId),
-                new Claim(JwtRegisteredClaimNames.Email, email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, userId),   // User ID claim
+        new Claim(ClaimTypes.Name, username),              // Username claim
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // Unique Token ID
+    };
 
+            // Fetch expiration time from configuration (default to 1 hour if not found)
+            double tokenExpiry = Convert.ToDouble(_config["Jwt:ExpiryHours"] ?? "1");
+            var expires = DateTime.UtcNow.AddHours(tokenExpiry);
+
+            // Create the token
             var token = new JwtSecurityToken(
-                _config["Jwt:Issuer"],
-                _config["Jwt:Audience"],
-                claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                claims: claims,
+                expires: expires,
                 signingCredentials: creds
             );
 
+            // Write the token as a string and return
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }
-
