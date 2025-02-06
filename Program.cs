@@ -36,6 +36,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Register Services and Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddSingleton<RedisCacheService>();
 builder.Services.AddScoped<UserService>();
