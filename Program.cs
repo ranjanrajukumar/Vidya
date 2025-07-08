@@ -73,15 +73,19 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-        c.RoutePrefix = ""; // Serve Swagger UI at root
-    });
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI(c =>
+//    {
+//        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+//        c.RoutePrefix = ""; // Serve Swagger UI at root
+//    });
+//}
+
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // ?? Apply CORS Middleware
 app.UseCors("AllowAll");
@@ -93,5 +97,24 @@ app.UseAuthorization();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        // You can log the exception using your custom logger or default logger
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while applying database migrations.");
+
+        // Optional: rethrow or suppress based on environment
+        // throw;
+    }
+}
+
 
 app.Run();
