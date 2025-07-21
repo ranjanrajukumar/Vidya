@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Vidya.Domain.Entities;
-using Vidya.Infrastructure.Caching;
+//using Vidya.Infrastructure.Caching;
 using Vidya.Application.Interfaces;
 using Vidya.Core.Security;
 
@@ -11,13 +11,13 @@ namespace Vidya.Application.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly JwtTokenService _jwtService;
-        private readonly RedisCacheService _cacheService;
+        //private readonly RedisCacheService _cacheService;
 
-        public UserService(IUserRepository userRepository, JwtTokenService jwtService, RedisCacheService cacheService)
+        public UserService(IUserRepository userRepository, JwtTokenService jwtService)// RedisCacheService cacheService)
         {
             _userRepository = userRepository;
             _jwtService = jwtService;
-            _cacheService = cacheService;
+          //  _cacheService = cacheService;
         }
 
         public async Task<string> AuthenticateUserAsync(string username, string password)
@@ -32,7 +32,7 @@ namespace Vidya.Application.Services
             var token = _jwtService.GenerateToken(user.UserId.ToString(), user.UserName);
 
             // Store token in Redis with expiration
-            await StoreTokenAsync(user.UserId.ToString(), token);
+           // await StoreTokenAsync(user.UserId.ToString(), token); // not using Radis
 
             return token;
         }
@@ -50,12 +50,12 @@ namespace Vidya.Application.Services
             }
 
             // Make sure _cacheService is properly initialized and injected
-            await _cacheService.SetCacheAsync($"token_{userId}", token, TimeSpan.FromHours(1));
+           // await _cacheService.SetCacheAsync($"token_{userId}", token, TimeSpan.FromHours(1)); // 20-07-2025
         }
 
-        public async Task<string> GetStoredTokenAsync(string userId)
-        {
-            return await _cacheService.GetCacheAsync($"token_{userId}");
-        }
+        //public async Task<string> GetStoredTokenAsync(string userId)
+        //{
+        //    return await _cacheService.GetCacheAsync($"token_{userId}");
+        //}
     }
 }

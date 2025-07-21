@@ -4,7 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Vidya.Application.Services;
 using Vidya.Core.Security;
-using Vidya.Infrastructure.Caching;
+//using Vidya.Infrastructure.Caching;
 using Vidya.Infrastructure.Data;
 using Vidya.Infrastructure.Repositories;
 using Vidya.Application.Interfaces;
@@ -39,7 +39,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ICollegeRepository, CollegeRepository>();
 builder.Services.AddSingleton<JwtTokenService>();
-builder.Services.AddSingleton<RedisCacheService>();
+//builder.Services.AddSingleton<RedisCacheService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddSingleton<ILogger, CustomLogger>();
 
@@ -73,19 +73,20 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI(c =>
-//    {
-//        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-//        c.RoutePrefix = ""; // Serve Swagger UI at root
-//    });
-//}
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+{
+    app.UsePathBase("/vidya");
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+        c.RoutePrefix = ""; // Serve Swagger UI at root
+    });
+}
 
 
-app.UseSwagger();
-app.UseSwaggerUI();
+//app.UseSwagger();
+//app.UseSwaggerUI();
 
 // ?? Apply CORS Middleware
 app.UseCors("AllowAll");

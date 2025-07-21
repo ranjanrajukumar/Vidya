@@ -102,7 +102,8 @@ namespace Vidya.API.Controllers
                 UserName = user.UserName,
                 RoleID = user.RoleID,
                 IsAdmin = user.IsAdmin,
-                Category = user.Category
+                Category = user.Category,
+                Password= HashPassword(user.Password)
             };
 
             return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, createdUserDto);
@@ -190,21 +191,21 @@ namespace Vidya.API.Controllers
             var token = _jwtService.GenerateToken(user.UserId.ToString(), user.UserName);
 
             // Store token in Redis cache
-            await _userService.StoreTokenAsync(user.UserId.ToString(), token);
+         //   await _userService.StoreTokenAsync(user.UserId.ToString(), token);
 
             return Ok(new { token });
         }
 
 
-        [HttpGet("token/{userId}")]
-        public async Task<IActionResult> GetStoredToken(string userId)
-        {
-            var token = await _userService.GetStoredTokenAsync(userId);
-            if (string.IsNullOrEmpty(token))
-                return NotFound("Token not found.");
+        //[HttpGet("token/{userId}")]
+        //public async Task<IActionResult> GetStoredToken(string userId)
+        //{
+        //    var token = await _userService.GetStoredTokenAsync(userId);
+        //    if (string.IsNullOrEmpty(token))
+        //        return NotFound("Token not found.");
 
-            return Ok(new { token });
-        }
+        //    return Ok(new { token });
+        //}
 
     }
 }
