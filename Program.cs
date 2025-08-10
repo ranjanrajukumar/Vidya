@@ -39,6 +39,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ICollegeRepository, CollegeRepository>();
 builder.Services.AddScoped<IMenuListRepository, MenuListRepository>();
+builder.Services.AddScoped<IMenuRightsRepository, MenuRightsRepository>();
 builder.Services.AddSingleton<JwtTokenService>();
 //builder.Services.AddSingleton<RedisCacheService>();
 builder.Services.AddScoped<UserService>();

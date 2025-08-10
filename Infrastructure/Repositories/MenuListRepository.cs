@@ -32,6 +32,40 @@ namespace Vidya.Infrastructure.Repositories
             return menus.Where(m => m.ParentId == 0);
         }
 
+        public async Task<IEnumerable<MenuList>> GetAllAsync(int userId)
+        {
+            var menus = await _context.MenuRights
+        .Where(r => r.UserId == userId && r.DelStatus == 0)
+        .Join(
+            _context.MenuLists.Where(m => m.DelStatus == 0),
+            r => r.MenuID,
+            m => m.MenuId,
+            (r, m) => new MenuList
+            {
+                MenuId = m.MenuId,
+                MenuName = m.MenuName,
+                ParentId = m.ParentId,
+                SortOrder = m.SortOrder,
+                DelStatus = r.DelStatus ?? 0
+            }
+        )
+        .OrderBy(m => m.SortOrder)
+        .ToListAsync();
+
+            // Build lookup for parent-child relationships
+            var menuLookup = menus.ToLookup(m => m.ParentId);
+
+            foreach (var menu in menus)
+            {
+                menu.SubMenus = menuLookup[menu.MenuId].ToList();
+            }
+
+            // Return only top-level menus
+            return menus.Where(m => m.ParentId == 0).ToList();
+
+        }
+
+
         public async Task<MenuList?> GetByIdAsync(int menuId)
         {
             return await _context.MenuLists.FindAsync(menuId);

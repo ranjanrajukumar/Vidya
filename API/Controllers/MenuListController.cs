@@ -22,6 +22,15 @@ namespace Vidya.API.Controllers
             return Ok(menus);
         }
 
+
+        [HttpGet("user/{userId:int}")]
+        public async Task<IActionResult> GetAll(int userId)
+        {
+            var menus = await _menuListRepository.GetAllAsync(userId);
+            return Ok(menus);
+        }
+
+
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {

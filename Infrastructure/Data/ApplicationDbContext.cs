@@ -15,6 +15,9 @@ namespace Vidya.Infrastructure.Data
         public DbSet<College> colleges { get; set; }
 
         public DbSet<MenuList> MenuLists { get; set; }
+        public DbSet<MenuRights> MenuRights { get; set; }
+
+        
     }
 
 }
