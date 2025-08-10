@@ -21,7 +21,7 @@ namespace Vidya.Domain.Entities
 
         public int IsAdmin { get; set; } // Nullable if user type is not always specified
 
-        public int Category { get; set; } // Nullable if category is optional
+        public string Category { get; set; } // Nullable if category is optional
 
         public string? AuthAdd { get; set; } // Nullable if not all users have add permissions
 

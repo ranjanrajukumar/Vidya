@@ -9,7 +9,7 @@ namespace Vidya.API.DTO
         public string Password { get; set; } // Can be optional for responses
         public int RoleID { get; set; }
         public int IsAdmin { get; set; }
-        public int Category { get; set; }
+        public String Category { get; set; }
         public string AuthAdd { get; set; }
         public string AuthLstEdt { get; set; }
         public string AuthDel { get; set; }
