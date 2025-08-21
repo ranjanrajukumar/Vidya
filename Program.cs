@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 using Vidya.Application.Services;
 using Vidya.Core.Security;
-//using Vidya.Infrastructure.Caching;
 using Vidya.Infrastructure.Data;
 using Vidya.Infrastructure.Repositories;
 using Vidya.Application.Interfaces;
@@ -21,7 +21,7 @@ builder.Services.AddControllers(options =>
     options.Filters.Add(new CustomExceptionFilter()); // Register global exception filter
 });
 
-// ?? Enable CORS (Allow any origin, method, and header)
+// ? Enable CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -30,26 +30,28 @@ builder.Services.AddCors(options =>
                         .AllowAnyHeader());
 });
 
-// Configure Database Context
+// ? Database Context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register Services and Repositories
+// ? Register Services & Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ICollegeRepository, CollegeRepository>();
 builder.Services.AddScoped<IMenuListRepository, MenuListRepository>();
 builder.Services.AddScoped<IMenuRightsRepository, MenuRightsRepository>();
 builder.Services.AddSingleton<JwtTokenService>();
-//builder.Services.AddSingleton<RedisCacheService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddSingleton<ILogger, CustomLogger>();
 
-// Configure Logging
-builder.Logging.ClearProviders(); // Clears default log providers
-builder.Logging.AddProvider(new CustomLoggerProvider()); // Adds custom logger
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContextService, UserContextService>();
 
-// Configure Authentication
+// ? Configure Logging
+builder.Logging.ClearProviders();
+builder.Logging.AddProvider(new CustomLoggerProvider());
+
+// ? JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -59,7 +61,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "YourDefaultKey")
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "SuperSecretKey123") // ? FIXED
             ),
             ValidateIssuer = true,
             ValidateAudience = true,
@@ -68,39 +70,68 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Enable Swagger
+// ? Swagger + JWT Auth
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Vidya API", Version = "v1" });
+
+    // JWT Bearer token support
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer {your token}'"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ? Swagger UI
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
-    app.UsePathBase("/vidya");
+    // ?? Remove UsePathBase unless you want "/vidya/api/..." instead of "/api/..."
+    // app.UsePathBase("/vidya");
+
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-        c.RoutePrefix = ""; // Serve Swagger UI at root
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Vidya API V1");
+        c.RoutePrefix = ""; // Swagger at root
     });
 }
 
-
-//app.UseSwagger();
-//app.UseSwaggerUI();
-
-// ?? Apply CORS Middleware
+// ? Middlewares
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Register Custom Middleware
+// Custom Middlewares
 app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<UserContextMiddleware>();
 
 app.MapControllers();
 
+// ? Auto Migrate DB
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -110,14 +141,9 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        // You can log the exception using your custom logger or default logger
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while applying database migrations.");
-
-        // Optional: rethrow or suppress based on environment
-        // throw;
     }
 }
-
 
 app.Run();

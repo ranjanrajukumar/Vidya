@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Vidya.API.DTO;
@@ -9,19 +10,25 @@ namespace Vidya.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // 🔹 This will protect all endpoints in this controller
     public class CollegeController : ControllerBase
     {
         private readonly ICollegeRepository _collegeRepository;
+        private readonly IUserContextService _userContext;
 
-        public CollegeController(ICollegeRepository collegeRepository)
+        public CollegeController(ICollegeRepository collegeRepository, IUserContextService userContext)
         {
             _collegeRepository = collegeRepository;
+            _userContext = userContext;
         }
 
         // GET: api/college
         [HttpGet]
+
         public async Task<ActionResult<IEnumerable<CollegeDTO>>> GetColleges()
         {
+            var userId = _userContext.UserId;
+            var username = _userContext.Username;
             var colleges = await _collegeRepository.GetAllAsync();
             return Ok(colleges);
         }

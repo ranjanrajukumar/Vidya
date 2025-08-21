@@ -17,14 +17,16 @@ namespace Vidya.Infrastructure.Repositories
         public async Task<IEnumerable<MenuRights>> GetAllAsync()
         {
             return await _context.MenuRights
-                                 .AsNoTracking()
-                                 .ToListAsync();
+                         .AsNoTracking()
+                         .Where(m => (m.DelStatus ?? 0) == 0)
+                         .ToListAsync();
         }
 
         public async Task<MenuRights?> GetByIdAsync(int id)
         {
             return await _context.MenuRights
-                                 .FirstOrDefaultAsync(m => m.IDCode == id);
+                      .FirstOrDefaultAsync(m => m.IDCode == id && (m.DelStatus ?? 0) == 0);
+
         }
 
         public async Task AddAsync(MenuRights rights)
