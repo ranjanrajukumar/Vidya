@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -71,17 +71,73 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // ? Swagger + JWT Auth
+//builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddSwaggerGen(c =>
+//{
+//    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Vidya API", Version = "v1" });
+
+//    // JWT Bearer token support
+//    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+//    {
+//        Name = "Authorization",
+//        Type = SecuritySchemeType.ApiKey,
+//        Scheme = "Bearer",
+//        BearerFormat = "JWT",
+//        In = ParameterLocation.Header,
+//        Description = "Enter 'Bearer {your token}'"
+//    });
+
+//    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+//    {
+//        {
+//            new OpenApiSecurityScheme
+//            {
+//                Reference = new OpenApiReference
+//                {
+//                    Type = ReferenceType.SecurityScheme,
+//                    Id = "Bearer"
+//                }
+//            },
+//            new string[] {}
+//        }
+//    });
+//});
+
+//var app = builder.Build();
+
+//// ? Swagger UI
+//if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+//{
+//    // ?? Remove UsePathBase unless you want "/vidya/api/..." instead of "/api/..."
+//    // app.UsePathBase("/vidya");
+
+//    app.UseSwagger();
+//    app.UseSwaggerUI(c =>
+//    {
+//        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Vidya API V1");
+//        c.RoutePrefix = ""; // Swagger at root
+//    });
+//}
+
+
+
+// ? Swagger + JWT Auth
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Vidya API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Vidya API",
+        Version = "v1",
+        Description = "Vidya project API documentation"
+    });
 
-    // JWT Bearer token support
+    // ✅ OpenAPI 3 JWT Bearer token support
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
+        Type = SecuritySchemeType.Http,   // ✅ Use Http instead of ApiKey
+        Scheme = "bearer",                // ✅ must be lowercase for OpenAPI 3
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
         Description = "Enter 'Bearer {your token}'"
@@ -105,6 +161,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+
 // ? Swagger UI
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
@@ -118,7 +175,6 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
         c.RoutePrefix = ""; // Swagger at root
     });
 }
-
 // ? Middlewares
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
